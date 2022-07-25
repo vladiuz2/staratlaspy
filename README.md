@@ -15,10 +15,6 @@ a very easy job.
 Get a faction data account
 
 ```python
-from solana.transaction import Transaction
-from solana.keypair import Keypair
-from solana.publickey import PublicKey
-from anchorpy import Provider
 from solana.rpc.async_api import AsyncClient
 from staratlas.faction.accounts import PlayerFactionData
 import asyncio, json
