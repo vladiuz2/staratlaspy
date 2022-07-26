@@ -10,7 +10,7 @@ from anchorpy.error import AccountInvalidDiscriminator
 from anchorpy.utils.rpc import get_multiple_accounts
 from anchorpy.borsh_extension import BorshPubkey
 from ..program_id import PROGRAM_ID
-
+from ..types import order_side
 
 class OrderAccountJSON(typing.TypedDict):
     order_initializer_pubkey: str
@@ -18,7 +18,7 @@ class OrderAccountJSON(typing.TypedDict):
     asset_mint: str
     initializer_currency_token_account: str
     initializer_asset_token_account: str
-    order_side: staratlaspy.marketplace.types.order_side.OrderSideJSON
+    order_side: order_side.OrderSideJSON
     price: int
     order_origination_qty: int
     order_remaining_qty: int
@@ -34,7 +34,7 @@ class OrderAccount:
         "asset_mint" / BorshPubkey,
         "initializer_currency_token_account" / BorshPubkey,
         "initializer_asset_token_account" / BorshPubkey,
-        "order_side" / staratlaspy.marketplace.types.order_side.layout,
+        "order_side" / order_side.layout,
         "price" / borsh.U64,
         "order_origination_qty" / borsh.U64,
         "order_remaining_qty" / borsh.U64,
@@ -45,7 +45,7 @@ class OrderAccount:
     asset_mint: PublicKey
     initializer_currency_token_account: PublicKey
     initializer_asset_token_account: PublicKey
-    order_side: staratlaspy.marketplace.types.order_side.OrderSideKind
+    order_side: order_side.OrderSideKind
     price: int
     order_origination_qty: int
     order_remaining_qty: int
@@ -98,7 +98,7 @@ class OrderAccount:
             asset_mint=dec.asset_mint,
             initializer_currency_token_account=dec.initializer_currency_token_account,
             initializer_asset_token_account=dec.initializer_asset_token_account,
-            order_side=staratlaspy.marketplace.types.order_side.from_decoded(dec.order_side),
+            order_side=order_side.from_decoded(dec.order_side),
             price=dec.price,
             order_origination_qty=dec.order_origination_qty,
             order_remaining_qty=dec.order_remaining_qty,
@@ -135,7 +135,7 @@ class OrderAccount:
             initializer_asset_token_account=PublicKey(
                 obj["initializer_asset_token_account"]
             ),
-            order_side=staratlaspy.marketplace.types.order_side.from_json(obj["order_side"]),
+            order_side=order_side.from_json(obj["order_side"]),
             price=obj["price"],
             order_origination_qty=obj["order_origination_qty"],
             order_remaining_qty=obj["order_remaining_qty"],

@@ -11,14 +11,14 @@ from anchorpy.error import AccountInvalidDiscriminator
 from anchorpy.utils.rpc import get_multiple_accounts
 from anchorpy.borsh_extension import BorshPubkey
 from ..program_id import PROGRAM_ID
-
+from ..types import royalty_tier
 
 class RegisteredCurrencyJSON(typing.TypedDict):
     token_mint: str
     sa_currency_vault: str
     royalty: int
     bump: int
-    royalty_tiers: typing.Optional[list[staratlaspy.marketplace.types.royalty_tier.RoyaltyTierJSON]]
+    royalty_tiers: typing.Optional[list[royalty_tier.RoyaltyTierJSON]]
 
 
 @dataclass
@@ -31,14 +31,14 @@ class RegisteredCurrency:
         "bump" / borsh.U8,
         "royalty_tiers"
         / borsh.Option(
-            borsh.Vec(typing.cast(Construct, staratlaspy.marketplace.types.royalty_tier.RoyaltyTier.layout))
+            borsh.Vec(typing.cast(Construct, royalty_tier.RoyaltyTier.layout))
         ),
     )
     token_mint: PublicKey
     sa_currency_vault: PublicKey
     royalty: int
     bump: int
-    royalty_tiers: typing.Optional[list[staratlaspy.marketplace.types.royalty_tier.RoyaltyTier]]
+    royalty_tiers: typing.Optional[list[royalty_tier.RoyaltyTier]]
 
     @classmethod
     async def fetch(
@@ -91,7 +91,7 @@ class RegisteredCurrency:
                 if dec.royalty_tiers is None
                 else list(
                     map(
-                        lambda item: staratlaspy.marketplace.types.royalty_tier.RoyaltyTier.from_decoded(item),
+                        lambda item: royalty_tier.RoyaltyTier.from_decoded(item),
                         dec.royalty_tiers,
                     )
                 )
@@ -123,7 +123,7 @@ class RegisteredCurrency:
                 if obj["royalty_tiers"] is None
                 else list(
                     map(
-                        lambda item: staratlaspy.marketplace.types.royalty_tier.RoyaltyTier.from_json(item),
+                        lambda item: royalty_tier.RoyaltyTier.from_json(item),
                         obj["royalty_tiers"],
                     )
                 )

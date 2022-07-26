@@ -11,8 +11,7 @@ a very easy job.
 # Usage
 
 
-### Faction Accounts
-Get a faction data account
+### Get faction account state
 
 ```python
 from solana.rpc.async_api import AsyncClient
@@ -43,6 +42,65 @@ returns
 }
 ```
 
+### Get multiple accounts of different types
+
+```
+from solana.rpc.async_api import AsyncClient
+from staratlas import fetch_multiple_accounts
+import asyncio, json
+
+client = AsyncClient("https://api.mainnet-beta.solana.com")
+accounts = asyncio.run(fetch_multiple_accounts(client, [
+    "CkPEsmgfeCV4RcLHWA6jNaDWaGkVXT5Q2TTsysXyRk2B",
+    "Tx4YJpozxG2U6R2PvszvW1872em7J8xMY59CgfhndFf"
+]))
+
+
+print(
+    json.dumps([
+        account.to_json() 
+        for account in accounts], 
+    indent=2)
+)
+```
+
+output:
+
+```json
+[
+  {
+    "owner": "8BMwvX4CNk8iEaDrhL51fvwdiPKFkPc5BnnTxbwPYxtf",
+    "faction_id": 0,
+    "ship_mint": "8RveLFEyteyL1vbCKPQJxjf3JT1ACyrzs46TXbJStrHG",
+    "ship_quantity_in_escrow": 150,
+    "fuel_quantity_in_escrow": 25161666,
+    "food_quantity_in_escrow": 20395265,
+    "arms_quantity_in_escrow": 33968125,
+    "fuel_current_capacity": 259085,
+    "food_current_capacity": 259085,
+    "arms_current_capacity": 259085,
+    "health_current_capacity": 259085,
+    "staked_at_timestamp": 1642501894,
+    "fueled_at_timestamp": 1658658240,
+    "fed_at_timestamp": 1658658240,
+    "armed_at_timestamp": 1658658240,
+    "repaired_at_timestamp": 1658658240,
+    "current_capacity_timestamp": 1658658240,
+    "total_time_staked": 13676418,
+    "staked_time_paid": 13510428,
+    "pending_rewards": 0,
+    "total_rewards_paid": 90449613374400
+  },
+  {
+    "update_authority_master": "DH3QYef5ATXfjULMMpnTvUmB3ocTm7ewgmwNBeZ26n9K",
+    "fuel_mint": "fueL3hBZjLLLJHiFH9cqZoozTG3XQZ53diwFPwbzNim",
+    "food_mint": "foodQJAztMzX1DKpLaiounNe2BDMds5RNuPC6jsNrDG",
+    "arms_mint": "ammoK8AkX2wnebQb35cDAZtTkvsXQbi82cGeTnUvvfK",
+    "toolkit_mint": "tooLsNYLiVqzg8o4m3L2Uetbn62mvMWRqkog6PQeYKL"
+  }
+]
+
+```
 # Author
 
 * vlad@theclubguild.com

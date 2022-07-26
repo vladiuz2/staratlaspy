@@ -21,7 +21,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="staratlaspy",
-    version="0.1.19",
+    version="0.1.20",
     description="Python module for parsing staratlas instructions (based on anchorpy).",
     long_description = long_description,
     readme = "README.md",

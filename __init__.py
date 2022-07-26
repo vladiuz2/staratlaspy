@@ -1,14 +1,23 @@
-from staratlaspy.marketplace import MarketVars
-from staratlaspy.marketplace import OpenOrdersCounter
-from staratlaspy.marketplace import OrderAccount
-from staratlaspy.marketplace import RegisteredCurrency
-from staratlaspy.score.accounts import ScoreVars
-from staratlaspy.score.accounts import ScoreVarsShip
-from staratlaspy.score.accounts import ShipStaking
-from staratlaspy.faction.accounts import PlayerFactionData
-from staratlaspy.faction.program_id import PROGRAM_ID as faction_PROGRAM_ID
-from staratlaspy.marketplace.program_id import PROGRAM_ID as marketplace_PROGRAM_ID
-from staratlaspy.score.program_id import PROGRAM_ID as score_PROGRAM_ID
+import typing
+
+from base64 import b64decode
+from solana.publickey import PublicKey
+from solana.rpc.async_api import AsyncClient
+from solana.rpc.commitment import Commitment
+
+from anchorpy.utils.rpc import get_multiple_accounts
+
+from .marketplace.accounts import MarketVars
+from .marketplace.accounts import OpenOrdersCounter
+from .marketplace.accounts import OrderAccount
+from .marketplace.accounts import RegisteredCurrency
+from .score.accounts import ScoreVars
+from .score.accounts import ScoreVarsShip
+from .score.accounts import ShipStaking
+from .faction.accounts import PlayerFactionData
+from .faction.program_id import PROGRAM_ID as faction_PROGRAM_ID
+from .marketplace.program_id import PROGRAM_ID as marketplace_PROGRAM_ID
+from .score.program_id import PROGRAM_ID as score_PROGRAM_ID
 
 account_type_map = {}
 
@@ -26,3 +35,21 @@ for account_type_meta in [
     program[account_type_meta[1].discriminator] = account_type_meta[1]
     account_type_map[account_type_meta[0]] = program
 
+async def fetch_multiple_accounts(
+        client:AsyncClient,
+        addresses: list[PublicKey],
+        commitment: typing.Optional[Commitment] = None
+    ):
+    resps = await get_multiple_accounts(client, addresses, commitment=commitment)
+    result = []
+    for resp in resps:
+        if resp is None:
+            result.append(None)
+            continue
+        if resp.account.owner in account_type_map.keys():
+            program = account_type_map.get(resp.account.owner)
+            if resp.account.data[:8] in program.keys():
+                result.append(program.get(resp.account.data[:8]).decode(resp.account.data))
+                continue
+        result.append(resp)
+    return result
