@@ -11,6 +11,93 @@ a very easy job.
 # Usage
 
 
+### Get fleet info for a wallet
+
+```python
+import asyncio, json, httpx
+from solana.publickey import PublicKey
+from solana.rpc.async_api import AsyncClient
+from staratlas import fetch_multiple_accounts
+from staratlas.score import  ScoreStats
+from staratlas.score import  getShipStakingAccount, getScoreVarsShipAccount, getScoreEscrowAuthAccount
+
+playerKey = PublicKey('8BMwvX4CNk8iEaDrhL51fvwdiPKFkPc5BnnTxbwPYxtf')
+
+async def main():
+    connection = AsyncClient("https://api.mainnet-beta.solana.com")
+    async with httpx.AsyncClient() as client:
+        r = await client.get('https://api.staratlas.club/nfts?category=ship')
+        nfts = r.json()
+        await client.aclose()
+    mints = [PublicKey(nft.get('mint')) for nft in nfts]
+    staking = [getShipStakingAccount(playerKey, mint)[0] for mint in mints]
+    escrow = [getScoreEscrowAuthAccount(playerKey, mint)[0] for mint in mints]
+    vars = [getScoreVarsShipAccount(mint)[0] for mint in mints]
+    print(len(nfts), len(mints), len(staking), len(escrow))
+    staking_state = await fetch_multiple_accounts(connection, staking)
+    vars_state = await fetch_multiple_accounts(connection, vars)
+    await connection.close()
+    score_fleet = []
+    for i in range(len(nfts)):
+        if staking_state[i]:
+            score_fleet.append({
+                "nft": nfts[i],
+                "staking": staking_state[i].to_json(),
+                "vars": vars_state[i].to_json(),
+                "accounts": {
+                    "shipStaking": str(staking[i]),
+                    "escrowAuth": str(escrow[i]),
+                    "varsShip": str(vars[i])
+                },
+                "stats": ScoreStats(vars_state[i], staking_state[i]).to_json()
+            })
+    print(json.dumps(score_fleet, indent=2))
+asyncio.run(main())
+```
+
+This will display up-to-date info on a wallet's fleet.
+
+including this:
+```json    
+{
+    ...
+    "stats": {
+      "seconds_remaining": 49045,
+      "seconds_since_last_action": 29841,
+      "fuel_daily_burn": 11285,
+      "fuel_total_capacity_seconds": 163459,
+      "fuel_current_supply_to_total_capacity_percent": 0.8174404590753644,
+      "fuel_total_capacity": 21349,
+      "fuel_current_supply": 17451,
+      "fuel_needed_for_full_supply": 3897,
+      "fuel_needed_for_optimal_supply": 0,
+      "arms_daily_burn": 7930,
+      "arms_total_capacity_seconds": 279138,
+      "arms_current_supply_to_total_capacity_percent": 0.8930958880553704,
+      "arms_total_capacity": 25619,
+      "arms_current_supply": 22880,
+      "arms_needed_for_full_supply": 2738,
+      "arms_needed_for_optimal_supply": 0,
+      "food_daily_burn": 7015,
+      "food_total_capacity_seconds": 78886,
+      "food_current_supply_to_total_capacity_percent": 0.6217199503080395,
+      "food_total_capacity": 6404,
+      "food_current_supply": 3981,
+      "food_needed_for_full_supply": 2422,
+      "food_needed_for_optimal_supply": 2423,
+      "toolkit_daily_burn": 10980,
+      "toolkit_total_capacity_seconds": 163200,
+      "toolkit_current_supply_to_total_capacity_percent": 0.8171507352941176,
+      "toolkit_total_capacity": 20740,
+      "toolkit_current_supply": 16947,
+      "toolkit_needed_for_full_supply": 3792,
+      "toolkit_needed_for_optimal_supply": 0
+    }
+  }
+
+```
+
+
 ### Get faction account state
 
 ```python
@@ -44,7 +131,7 @@ returns
 
 ### Get multiple accounts of different types
 
-```
+```python
 from solana.rpc.async_api import AsyncClient
 from staratlas import fetch_multiple_accounts
 import asyncio, json
@@ -99,8 +186,8 @@ output:
     "toolkit_mint": "tooLsNYLiVqzg8o4m3L2Uetbn62mvMWRqkog6PQeYKL"
   }
 ]
-
 ```
+
 # Author
 
 * vlad@theclubguild.com

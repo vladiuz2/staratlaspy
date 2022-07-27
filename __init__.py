@@ -38,7 +38,7 @@ for account_type_meta in [
 async def fetch_multiple_accounts(
         client:AsyncClient,
         addresses: list[PublicKey],
-        commitment: typing.Optional[Commitment] = None
+        commitment: Commitment = Commitment('confirmed')
     ):
     resps = await get_multiple_accounts(client, addresses, commitment=commitment)
     result = []
