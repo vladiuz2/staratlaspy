@@ -7,6 +7,11 @@ a very easy job.
 
 > This code is not associated with Star Atlas, Automata LLC, or any of their companies.
 
+# Install
+
+```bash
+python3 -m pip install staratlaspy
+```
 
 # Usage
 

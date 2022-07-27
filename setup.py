@@ -24,6 +24,7 @@ setup(
     version="0.1.21",
     description="Python module for parsing staratlas instructions (based on anchorpy).",
     long_description = long_description,
+    long_description_content_type = 'text/markdown',
     readme = "README.md",
     license_files = ('LICENSE.txt',),
     license = 'Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International Public License',
