@@ -21,7 +21,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="staratlaspy",
-    version="0.1.24",
+    version="0.1.25",
     description="Python module for parsing staratlas instructions (based on anchorpy).",
     long_description = long_description,
     long_description_content_type = 'text/markdown',
@@ -40,6 +40,7 @@ setup(
       "Programming Language :: Python :: 3"
     ],
     packages = ['staratlas'] +
+               ['staratlas.utils'] +
                ['staratlas.marketplace'] +
                ['staratlas.marketplace.'+ s for s in ['accounts','errors','instructions','types']] +
                ['staratlas.faction'] +
@@ -54,7 +55,8 @@ setup(
         'requests[socks]',
         'solana==0.23.1',
         'click==8.1.3',
-        'anchorpy[cli]==0.9.1'
+        'anchorpy[cli]==0.9.1',
+        'asyncclick==8.1.3.2'
     ],
     data_files=[("idls", [
         "idls/staratlas-score.json",
@@ -65,7 +67,7 @@ setup(
     include_package_data = True,
     entry_points={  # Optional
         "console_scripts": [
-            "staratlas=staratlas.cli:main",
+            "staratlas=staratlas.cli:cli",
         ],
     },
 )
