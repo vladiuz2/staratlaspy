@@ -19,12 +19,13 @@ python3 -m pip install staratlaspy
 ### Get fleet info for a wallet
 
 ```python
-import asyncio, json, httpx
+import asyncio, json, httpx, prettytable
 from solana.publickey import PublicKey
+from typing import Any, List, Tuple, Union
+from staratlaspy.score import  getShipStakingAccount, getScoreVarsShipAccount, getScoreEscrowAuthAccount
 from solana.rpc.async_api import AsyncClient
-from staratlas import fetch_multiple_accounts
-from staratlas.score import  ScoreStats
-from staratlas.score import  getShipStakingAccount, getScoreVarsShipAccount, getScoreEscrowAuthAccount
+from staratlaspy import fetch_multiple_accounts
+from staratlaspy.score import ScoreVars, ShipStaking, ScoreStats
 
 playerKey = PublicKey('8BMwvX4CNk8iEaDrhL51fvwdiPKFkPc5BnnTxbwPYxtf')
 
@@ -43,6 +44,7 @@ async def main():
     vars_state = await fetch_multiple_accounts(connection, vars)
     await connection.close()
     score_fleet = []
+    last_stat = None
     for i in range(len(nfts)):
         if staking_state[i]:
             score_fleet.append({
@@ -54,7 +56,8 @@ async def main():
                     "escrowAuth": str(escrow[i]),
                     "varsShip": str(vars[i])
                 },
-                "stats": ScoreStats(vars_state[i], staking_state[i]).to_json()
+                "stats": ScoreStats(vars_state[i], staking_state[i]).to_json(),
+                "resources_to_optimal_supply": ScoreStats(vars_state[i], staking_state[i]).limited_atlas_resupply(atlas = 1000)
             })
     print(json.dumps(score_fleet, indent=2))
 asyncio.run(main())
@@ -97,6 +100,12 @@ including this:
       "toolkit_current_supply": 16947,
       "toolkit_needed_for_full_supply": 3792,
       "toolkit_needed_for_optimal_supply": 0
+    },
+    "resources_to_optimal_supply": {
+      "food": 9164,
+      "fuel": 11455,
+      "arms": 15464,
+      "toolkit": 16035
     }
   }
 
@@ -144,7 +153,8 @@ import asyncio, json
 client = AsyncClient("https://api.mainnet-beta.solana.com")
 accounts = asyncio.run(fetch_multiple_accounts(client, [
     "CkPEsmgfeCV4RcLHWA6jNaDWaGkVXT5Q2TTsysXyRk2B",
-    "Tx4YJpozxG2U6R2PvszvW1872em7J8xMY59CgfhndFf"
+    "Tx4YJpozxG2U6R2PvszvW1872em7J8xMY59CgfhndFf",  
+    "ADNPGtWPcsrbYakFPHCKFnEv9yWpuo7zAQaUU9rwtvFA"
 ]))
 
 
