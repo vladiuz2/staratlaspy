@@ -22,10 +22,10 @@ python3 -m pip install staratlaspy
 import asyncio, json, httpx, prettytable
 from solana.publickey import PublicKey
 from typing import Any, List, Tuple, Union
-from staratlaspy.score import  getShipStakingAccount, getScoreVarsShipAccount, getScoreEscrowAuthAccount
+from staratlas.score import  getShipStakingAccount, getScoreVarsShipAccount, getScoreEscrowAuthAccount
 from solana.rpc.async_api import AsyncClient
-from staratlaspy import fetch_multiple_accounts
-from staratlaspy.score import ScoreVars, ShipStaking, ScoreStats
+from staratlas import fetch_multiple_accounts
+from staratlas.score import ScoreVars, ShipStaking, ScoreStats
 
 playerKey = PublicKey('8BMwvX4CNk8iEaDrhL51fvwdiPKFkPc5BnnTxbwPYxtf')
 
@@ -39,7 +39,6 @@ async def main():
     staking = [getShipStakingAccount(playerKey, mint)[0] for mint in mints]
     escrow = [getScoreEscrowAuthAccount(playerKey, mint)[0] for mint in mints]
     vars = [getScoreVarsShipAccount(mint)[0] for mint in mints]
-    print(len(nfts), len(mints), len(staking), len(escrow))
     staking_state = await fetch_multiple_accounts(connection, staking)
     vars_state = await fetch_multiple_accounts(connection, vars)
     await connection.close()
