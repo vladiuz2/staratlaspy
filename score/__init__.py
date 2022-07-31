@@ -93,9 +93,9 @@ class ScoreStats():
                                    vars.milliseconds_to_burn_one_fuel)
         self.fuel_total_capacity = int(staking.ship_quantity_in_escrow * self.fuel_total_capacity_seconds /
                                        (vars.milliseconds_to_burn_one_fuel / 1000) )
-        self.fuel_current_supply_to_total_capacity_percent = (staking.fuel_current_capacity -
+        self.fuel_current_supply_to_total_capacity_percent = max(0, (staking.fuel_current_capacity -
                                                               self.seconds_since_last_action) / \
-                                                             self.fuel_total_capacity_seconds
+                                                             self.fuel_total_capacity_seconds)
         self.fuel_needed_for_full_supply = staking.ship_quantity_in_escrow * \
                                            max(0, (1 - self.fuel_current_supply_to_total_capacity_percent) *
                                                self.fuel_total_capacity_seconds) / \
@@ -109,9 +109,9 @@ class ScoreStats():
                                    vars.milliseconds_to_burn_one_arms)
         self.arms_total_capacity = int(staking.ship_quantity_in_escrow * self.arms_total_capacity_seconds /
                                        (vars.milliseconds_to_burn_one_arms / 1000))
-        self.arms_current_supply_to_total_capacity_percent = (staking.arms_current_capacity -
+        self.arms_current_supply_to_total_capacity_percent = max(0, (staking.arms_current_capacity -
                                                               self.seconds_since_last_action) / \
-                                                             self.arms_total_capacity_seconds
+                                                             self.arms_total_capacity_seconds)
         self.arms_needed_for_full_supply = staking.ship_quantity_in_escrow * \
                                            max(0, (1 - self.arms_current_supply_to_total_capacity_percent) *
                                                self.arms_total_capacity_seconds) / \
@@ -125,9 +125,9 @@ class ScoreStats():
                                    vars.milliseconds_to_burn_one_food)
         self.food_total_capacity = int(staking.ship_quantity_in_escrow * self.food_total_capacity_seconds /
                                        (vars.milliseconds_to_burn_one_food / 1000))
-        self.food_current_supply_to_total_capacity_percent = (staking.food_current_capacity -
+        self.food_current_supply_to_total_capacity_percent = max(0, (staking.food_current_capacity -
                                                               self.seconds_since_last_action) / \
-                                                             self.food_total_capacity_seconds
+                                                             self.food_total_capacity_seconds)
         self.food_needed_for_full_supply = staking.ship_quantity_in_escrow * \
                                            max(0, (1 - self.food_current_supply_to_total_capacity_percent) *
                                                self.food_total_capacity_seconds) / \
@@ -141,9 +141,9 @@ class ScoreStats():
                                       vars.milliseconds_to_burn_one_toolkit)
         self.toolkit_total_capacity = int(staking.ship_quantity_in_escrow * self.toolkit_total_capacity_seconds /
                                           (vars.milliseconds_to_burn_one_toolkit / 1000))
-        self.toolkit_current_supply_to_total_capacity_percent = (staking.health_current_capacity -
+        self.toolkit_current_supply_to_total_capacity_percent = max(0, (staking.health_current_capacity -
                                                                  self.seconds_since_last_action) / \
-                                                                self.toolkit_total_capacity_seconds
+                                                                self.toolkit_total_capacity_seconds)
         self.toolkit_needed_for_full_supply = staking.ship_quantity_in_escrow * \
                                               max(0, (1 - self.toolkit_current_supply_to_total_capacity_percent) *
                                                   self.toolkit_total_capacity_seconds) / \
@@ -204,7 +204,6 @@ class ScoreStats():
                     resources[k]["seconds_to_optimal_supply"] -= secs
                     resources[k]["seconds_consumed"] = resources[k].get('seconds_consumed', 0) + secs
 
-        atlas = 1000
         atlas_remaining = atlas
         atlas_consumed = None
         for m in sorted([{**{"key": k}, **resources[k]} for k in resources.keys() if k not in get_depleted_resources()],
