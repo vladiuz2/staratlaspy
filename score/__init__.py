@@ -1,6 +1,7 @@
 from solana.publickey import PublicKey
 from .program_id import PROGRAM_ID
 from .accounts import ScoreVars, ShipStaking
+from ..utils.semantic_time import time_breakdown_string
 
 import  time, math
 
@@ -43,56 +44,81 @@ def getShipStakingAccount(playerPublicKey:PublicKey, assetMint:PublicKey, progra
         PROGRAM_ID)
 
 class ScoreStats():
-    seconds_remaining: int
-    seconds_since_last_action: int
-    fuel_daily_burn: int
-    fuel_total_capacity_seconds: int
-    fuel_current_supply_to_total_capacity_percent: float
-    fuel_total_capacity: int
-    fuel_current_supply: int
-    fuel_needed_for_full_supply: int
-    fuel_needed_for_optimal_supply: int
-    arms_daily_burn: int
-    arms_total_capacity_seconds: int
-    arms_current_supply_to_total_capacity_percent: float
-    arms_total_capacity: int
-    arms_current_supply: int
-    arms_needed_for_full_supply: int
-    arms_needed_for_optimal_supply: int
-    food_daily_burn: int
-    food_total_capacity_seconds: int
-    food_current_supply_to_total_capacity_percent: float
-    food_total_capacity: int
-    food_current_supply: int
-    food_needed_for_full_supply: int
-    food_needed_for_optimal_supply: int
-    toolkit_daily_burn: int
-    toolkit_total_capacity_seconds: int
-    toolkit_current_supply_to_total_capacity_percent: float
-    toolkit_total_capacity: int
-    toolkit_current_supply: int
-    toolkit_needed_for_full_supply: int
-    toolkit_needed_for_optimal_supply: int
-
+    json_attrs = []
+    def _set_j_attr_(self, name, val):
+        if not name in self.json_attrs:
+            self.json_attrs.append(name)
+        self.__setattr__(name, val)
     def __init__(self, vars: ScoreVars, staking: ShipStaking):
         self.vars = vars
         self.staking = staking
-        self.seconds_since_last_action = int(time.time()) - staking.current_capacity_timestamp
-        self.fuel_total_capacity_seconds = int(vars.fuel_max_reserve * vars.milliseconds_to_burn_one_fuel / 1000)
-        self.food_total_capacity_seconds = int(vars.food_max_reserve * vars.milliseconds_to_burn_one_food / 1000)
-        self.arms_total_capacity_seconds = int(vars.arms_max_reserve * vars.milliseconds_to_burn_one_arms / 1000)
-        self.toolkit_total_capacity_seconds = int(vars.toolkit_max_reserve * vars.milliseconds_to_burn_one_toolkit / 1000)
-        min_total_capacity_seconds = min(self.fuel_total_capacity_seconds,
-                                                             self.food_total_capacity_seconds,
-                                                             self.arms_total_capacity_seconds,
-                                                             self.toolkit_total_capacity_seconds
-                                                             )
-        self.seconds_remaining = max(0, min_total_capacity_seconds - self.seconds_since_last_action)
-        # fuel
-        self.fuel_daily_burn = int(staking.ship_quantity_in_escrow * 24 * 60 * 60 * 1000 /
-                                   vars.milliseconds_to_burn_one_fuel)
-        self.fuel_total_capacity = int(staking.ship_quantity_in_escrow * self.fuel_total_capacity_seconds /
-                                       (vars.milliseconds_to_burn_one_fuel / 1000) )
+        self._set_j_attr_('seconds_since_last_action',
+                          time.time() - staking.current_capacity_timestamp)
+        rm = {
+            'food':'food',
+            'fuel':'fuel',
+            'arms':'arms',
+            'toolkit':'health'
+        }
+        # calc basic metrics
+        for r in rm.keys():
+            self._set_j_attr_(f'{r}_total_capacity_units',
+                             staking.ship_quantity_in_escrow *
+                             vars.__getattribute__(f'{r}_max_reserve')
+                             )
+            self._set_j_attr_(f'{r}_total_capacity_seconds',
+                             vars.__getattribute__(f'{r}_max_reserve') *
+                              vars.__getattribute__(f'milliseconds_to_burn_one_{r}') / 1000
+            )
+            self._set_j_attr_(f'{r}_daily_burn_units',
+                             round(staking.ship_quantity_in_escrow * 24 * 60 * 60 * 1000 /
+                             vars.__getattribute__(f'milliseconds_to_burn_one_{r}'))
+                             )
+        # calculate minimums
+        self._set_j_attr_('min_capacity_seconds', min(*[
+            staking.__getattribute__(f'{rm[r]}_current_capacity') for r in rm.keys()
+        ]))
+        self._set_j_attr_('min_total_capacity_seconds', min(*[
+            self.__getattribute__(f'{r}_total_capacity_seconds') for r in rm.keys()
+        ]))
+        self._set_j_attr_('min_capacity_seconds_human',
+                          time_breakdown_string(self.min_capacity_seconds*1000,2)
+                          )
+        self._set_j_attr_('seconds_inactive',
+                          max(0,
+                              self.seconds_since_last_action - self.min_capacity_seconds
+                              ))
+        self._set_j_attr_('seconds_inactive_human',
+                          time_breakdown_string(self.seconds_inactive*1000,2)
+                          )
+        for r in rm.keys():
+            self._set_j_attr_(f'{r}_remaining_seconds',
+                               max(
+                                   0,
+                                   staking.__getattribute__(f'{rm[r]}_current_capacity') -
+                                   (self.seconds_since_last_action - self.seconds_inactive)
+                               ))
+            self._set_j_attr_(f'{r}_remaining_seconds_human',
+                              time_breakdown_string(self.__getattribute__(f'{r}_remaining_seconds') * 1000, 2)
+                              )
+            self._set_j_attr_(f'{r}_remaining_percent',
+                              max(0, 100 * self.__getattribute__(f'{r}_remaining_seconds') /
+                                  self.__getattribute__(f'{r}_total_capacity_seconds')
+                                  ))
+            self._set_j_attr_(f'{r}_remaining_units',
+                              round(self.__getattribute__(f'{r}_remaining_percent') *
+                              self.__getattribute__(f'{r}_total_capacity_units') / 100)
+                              )
+            self._set_j_attr_(f'{r}_full_supply_deficit_units',
+                              self.__getattribute__(f'{r}_total_capacity_units') -
+                              self.__getattribute__(f'{r}_remaining_units')
+            )
+            self._set_j_attr_(f'{r}_optimal_supply_deficit_units',
+                              max(0, math.floor(self.__getattribute__(f'{r}_total_capacity_units') * (
+                                  self.min_total_capacity_seconds -
+                                  self.__getattribute__(f'{r}_remaining_seconds')) /
+                                      self.min_total_capacity_seconds)))
+        """
         self.fuel_current_supply_to_total_capacity_percent = max(0, (staking.fuel_current_capacity -
                                                               self.seconds_since_last_action) / \
                                                              self.fuel_total_capacity_seconds)
@@ -101,14 +127,17 @@ class ScoreStats():
                                                self.fuel_total_capacity_seconds) / \
                                            (vars.milliseconds_to_burn_one_fuel/1000)
         self.fuel_current_supply = self.fuel_total_capacity - self.fuel_needed_for_full_supply
-        self.fuel_needed_for_optimal_supply = max(0, int(staking.ship_quantity_in_escrow * min_total_capacity_seconds / \
+        self.fuel_needed_for_optimal_supply = max(0, round(staking.ship_quantity_in_escrow * min_total_capacity_seconds / \
                                                   (vars.milliseconds_to_burn_one_fuel / 1000) -
                                                   self.fuel_current_supply))
         # arms
-        self.arms_daily_burn = int(staking.ship_quantity_in_escrow * 24 * 60 * 60 * 1000 /
+        self.arms_daily_burn = round(staking.ship_quantity_in_escrow * 24 * 60 * 60 * 1000 /
                                    vars.milliseconds_to_burn_one_arms)
-        self.arms_total_capacity = int(staking.ship_quantity_in_escrow * self.arms_total_capacity_seconds /
+        self.arms_total_capacity = round(staking.ship_quantity_in_escrow * self.arms_total_capacity_seconds /
                                        (vars.milliseconds_to_burn_one_arms / 1000))
+        #self.arms_current_supply_to_total_capacity_percent = max(0, (staking.arms_current_capacity -
+        #                                                      self.seconds_since_last_action) / \
+        #                                                     self.arms_total_capacity_seconds)
         self.arms_current_supply_to_total_capacity_percent = max(0, (staking.arms_current_capacity -
                                                               self.seconds_since_last_action) / \
                                                              self.arms_total_capacity_seconds)
@@ -117,14 +146,12 @@ class ScoreStats():
                                                self.arms_total_capacity_seconds) / \
                                            (vars.milliseconds_to_burn_one_arms / 1000)
         self.arms_current_supply = self.arms_total_capacity - self.arms_needed_for_full_supply
-        self.arms_needed_for_optimal_supply = max(0, int(staking.ship_quantity_in_escrow * min_total_capacity_seconds / \
+        self.arms_needed_for_optimal_supply = max(0, round(staking.ship_quantity_in_escrow * min_total_capacity_seconds / \
                                                          (vars.milliseconds_to_burn_one_arms / 1000) -
                                                          self.arms_current_supply))
         # food
-        self.food_daily_burn = int(staking.ship_quantity_in_escrow * 24 * 60 * 60 * 1000 /
+        self.food_daily_burn = round(staking.ship_quantity_in_escrow * 24 * 60 * 60 * 1000 /
                                    vars.milliseconds_to_burn_one_food)
-        self.food_total_capacity = int(staking.ship_quantity_in_escrow * self.food_total_capacity_seconds /
-                                       (vars.milliseconds_to_burn_one_food / 1000))
         self.food_current_supply_to_total_capacity_percent = max(0, (staking.food_current_capacity -
                                                               self.seconds_since_last_action) / \
                                                              self.food_total_capacity_seconds)
@@ -133,14 +160,12 @@ class ScoreStats():
                                                self.food_total_capacity_seconds) / \
                                            (vars.milliseconds_to_burn_one_food / 1000)
         self.food_current_supply = self.food_total_capacity - self.food_needed_for_full_supply
-        self.food_needed_for_optimal_supply = max(0, int(staking.ship_quantity_in_escrow * min_total_capacity_seconds / \
+        self.food_needed_for_optimal_supply = max(0, round(staking.ship_quantity_in_escrow * min_total_capacity_seconds / \
                                                          (vars.milliseconds_to_burn_one_food / 1000) -
                                                          self.food_current_supply))
         # toolkit
-        self.toolkit_daily_burn = int(staking.ship_quantity_in_escrow * 24 * 60 * 60 * 1000 /
+        self.toolkit_daily_burn = round(staking.ship_quantity_in_escrow * 24 * 60 * 60 * 1000 /
                                       vars.milliseconds_to_burn_one_toolkit)
-        self.toolkit_total_capacity = int(staking.ship_quantity_in_escrow * self.toolkit_total_capacity_seconds /
-                                          (vars.milliseconds_to_burn_one_toolkit / 1000))
         self.toolkit_current_supply_to_total_capacity_percent = max(0, (staking.health_current_capacity -
                                                                  self.seconds_since_last_action) / \
                                                                 self.toolkit_total_capacity_seconds)
@@ -150,10 +175,10 @@ class ScoreStats():
                                               (vars.milliseconds_to_burn_one_toolkit / 1000)
         self.toolkit_current_supply = self.toolkit_total_capacity - self.toolkit_needed_for_full_supply
         self.toolkit_needed_for_optimal_supply = max(0,
-                                                     int(staking.ship_quantity_in_escrow * min_total_capacity_seconds / \
+                                                     round(staking.ship_quantity_in_escrow * min_total_capacity_seconds / \
                                                          (vars.milliseconds_to_burn_one_toolkit / 1000) -
                                                          self.toolkit_current_supply))
-
+        """
     def limited_atlas_resupply(self,
                                atlas: float,
                                fuel_price: float = 0.00144336,
@@ -222,35 +247,6 @@ class ScoreStats():
 
     def to_json(self):
         return {
-            "seconds_remaining": int(self.seconds_remaining),
-            "seconds_since_last_action": int(self.seconds_since_last_action),
-            "fuel_daily_burn": int(self.fuel_daily_burn),
-            "fuel_total_capacity_seconds": int(self.fuel_total_capacity_seconds),
-            "fuel_current_supply_to_total_capacity_percent": float(self.fuel_current_supply_to_total_capacity_percent),
-            "fuel_total_capacity": int(self.fuel_total_capacity),
-            "fuel_current_supply": int(self.fuel_current_supply),
-            "fuel_needed_for_full_supply": int(self.fuel_needed_for_full_supply),
-            "fuel_needed_for_optimal_supply": int(self.fuel_needed_for_optimal_supply),
-            "arms_daily_burn": int(self.arms_daily_burn),
-            "arms_total_capacity_seconds": int(self.arms_total_capacity_seconds),
-            "arms_current_supply_to_total_capacity_percent": float(self.arms_current_supply_to_total_capacity_percent),
-            "arms_total_capacity": int(self.arms_total_capacity),
-            "arms_current_supply": int(self.arms_current_supply),
-            "arms_needed_for_full_supply": int(self.arms_needed_for_full_supply),
-            "arms_needed_for_optimal_supply": int(self.arms_needed_for_optimal_supply),
-            "food_daily_burn": int(self.food_daily_burn),
-            "food_total_capacity_seconds": int(self.food_total_capacity_seconds),
-            "food_current_supply_to_total_capacity_percent": float(self.food_current_supply_to_total_capacity_percent),
-            "food_total_capacity": int(self.food_total_capacity),
-            "food_current_supply": int(self.food_current_supply),
-            "food_needed_for_full_supply": int(self.food_needed_for_full_supply),
-            "food_needed_for_optimal_supply": int(self.food_needed_for_optimal_supply),
-            "toolkit_daily_burn": int(self.toolkit_daily_burn),
-            "toolkit_total_capacity_seconds": int(self.toolkit_total_capacity_seconds),
-            "toolkit_current_supply_to_total_capacity_percent": float(
-                self.toolkit_current_supply_to_total_capacity_percent),
-            "toolkit_total_capacity": int(self.toolkit_total_capacity),
-            "toolkit_current_supply": int(self.toolkit_current_supply),
-            "toolkit_needed_for_full_supply": int(self.toolkit_needed_for_full_supply),
-            "toolkit_needed_for_optimal_supply": int(self.toolkit_needed_for_optimal_supply)
+            k:self.__getattribute__(k)
+            for k in sorted(self.json_attrs)
         }
