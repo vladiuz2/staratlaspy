@@ -118,78 +118,65 @@ class ScoreStats():
             self._set_j_attr_(f'{r}_optimal_supply_deficit_seconds',
                               max(0, self.min_total_capacity_seconds -
                                   self.__getattribute__(f'{r}_remaining_seconds')))
+            self._set_j_attr_(f'{r}_optimal_supply_deficit_seconds_human',
+                              time_breakdown_string(self.__getattribute__(f'{r}_optimal_supply_deficit_seconds') * 1000, 2)
+                              )
             self._set_j_attr_(f'{r}_optimal_supply_deficit_units',
                               math.floor(self.__getattribute__(f'{r}_total_capacity_units') *
                                          self.__getattribute__(f'{r}_optimal_supply_deficit_seconds') /
-                                      self.min_total_capacity_seconds))
+                                      self.__getattribute__(f'{r}_total_capacity_seconds')))
 
     def limited_atlas_resupply(self,
                                atlas: float,
                                fuel_price: float = 0.00144336,
                                food_price: float = 0.0006144,
                                arms_price: float = 0.00215039,
-                               toolkit_price: int = 0.0017408) -> list[4]:
-        resources = {
-            "food": {
-                "seconds_to_optimal_supply": self.food_optimal_supply_deficit_seconds,
-                "atlas_per_second": self.staking.ship_quantity_in_escrow * food_price / (
-                        self.vars.milliseconds_to_burn_one_food / 1000),
-                "milliseconds_to_burn_one":self.vars.milliseconds_to_burn_one_food,
-                "price": food_price
-            },
-            "fuel": {
-                "seconds_to_optimal_supply": self.fuel_optimal_supply_deficit_seconds,
-                "atlas_per_second": self.staking.ship_quantity_in_escrow * fuel_price / (
-                        self.vars.milliseconds_to_burn_one_fuel / 1000),
-                "milliseconds_to_burn_one":self.vars.milliseconds_to_burn_one_fuel,
-                "price": fuel_price
-            },
-            "arms": {
-                "seconds_to_optimal_supply": self.arms_optimal_supply_deficit_seconds,
-                "atlas_per_second": self.staking.ship_quantity_in_escrow * arms_price / (
-                        self.vars.milliseconds_to_burn_one_arms / 1000),
-                "milliseconds_to_burn_one":self.vars.milliseconds_to_burn_one_arms,
-                "price": arms_price
-            },
-            "toolkit": {
-                "seconds_to_optimal_supply": self.toolkit_optimal_supply_deficit_seconds,
-                "atlas_per_second": self.staking.ship_quantity_in_escrow * toolkit_price / (
-                        self.vars.milliseconds_to_burn_one_toolkit / 1000),
-                "milliseconds_to_burn_one":self.vars.milliseconds_to_burn_one_toolkit,
-                "price": toolkit_price
-            }
-        }
-        print(json.dumps(resources, indent=2))
-        def get_depleted_resources():
-            return [k for k in resources.keys() if not resources[k].get('seconds_to_optimal_supply', 0) > 0]
-
-        def get_atlas_per_second():
-            return sum(
-                [resources[k]['atlas_per_second'] for k in resources.keys() if k not in get_depleted_resources()])
-
-        def update_consumed_seconds(secs=0):
-            for k in resources.keys():
-                if k not in get_depleted_resources():
-                    resources[k]["seconds_to_optimal_supply"] -= secs
-                    resources[k]["seconds_consumed"] = resources[k].get('seconds_consumed', 0) + secs
-
+                               toolkit_price: float = 0.0017408) -> list:
+        prices = {'food': food_price, 'fuel': fuel_price, 'arms': arms_price, 'toolkit': toolkit_price}
+        deficits = sorted(list(set([self.__getattribute__(f'{r}_optimal_supply_deficit_seconds')
+            for r in prices.keys()])), reverse=True)
+        f = lambda x: deficits[x - len(deficits) + 1:] if x < len(deficits) - 1 else []
+        queue = [
+            {'resources': [k for k in prices.keys()
+                           if self.__getattribute__(f'{k}_optimal_supply_deficit_seconds')>=deficits[i]
+                           and self.__getattribute__(f'{k}_optimal_supply_deficit_seconds') > 0],
+             'consumption_limit_seconds': deficits[i] - max(f(i) + [0]),
+             'consumption_limit_human': time_breakdown_string((deficits[i] - max(f(i) + [0]))*1000, 2),
+             }
+            for i in range(len(deficits)) if deficits[i] > 0
+        ]
+        for i in range(len(queue)):
+            queue[i]['atlas_per_second'] = sum([
+                self.staking.__getattribute__(f'ship_quantity_in_escrow') * prices[r] /
+                (self.vars.__getattribute__(f'milliseconds_to_burn_one_{r}') / 1000)
+                for r in queue[i]['resources']
+            ])
+            queue[i]['atlas_limit'] = queue[i]['atlas_per_second'] * queue[i]['consumption_limit_seconds']
         atlas_remaining = atlas
-        atlas_consumed = None
-        for m in sorted([{**{"key": k}, **resources[k]} for k in resources.keys() if k not in get_depleted_resources()],
-                        key=lambda x: x.get('seconds_to_optimal_supply')):
-            if not get_atlas_per_second() > 0 or atlas_consumed == 0:
+        consumed_resources = {}
+        for step in queue:
+            if not atlas_remaining:
                 break
-            seconds_consumed = max(0, min(atlas_remaining / get_atlas_per_second(),
-                                          resources[m.get('key')]['seconds_to_optimal_supply']))
-            if not seconds_consumed > 0:
+            consumed_atlas = min([step.get('consumption_limit_seconds', 0) * step.get('atlas_per_second'),
+                                  atlas_remaining
+                                  ])
+            if not consumed_atlas:
                 break
-            atlas_consumed = seconds_consumed * get_atlas_per_second()
-            atlas_remaining = atlas_remaining - atlas_consumed
-            update_consumed_seconds(seconds_consumed)
-        res = { k:math.floor(self.staking.ship_quantity_in_escrow * resources[k].get('seconds_consumed',0)/\
-                  (resources[k].get('milliseconds_to_burn_one')/1000)) for k in resources}
-        res['atlas'] = atlas_consumed
-        return res
+            consumed_seconds = consumed_atlas / step.get('atlas_per_second')
+            atlas_remaining = atlas_remaining - consumed_atlas
+            for r in step.get('resources'):
+                consumed_resources[r] = consumed_resources.get(r,0) + \
+                                        consumed_seconds * \
+                                        self.staking.__getattribute__(f'ship_quantity_in_escrow') / \
+                                        (self.vars.__getattribute__(f'milliseconds_to_burn_one_{r}') / 1000)
+        for r in prices.keys():
+            if not consumed_resources.get(r):
+                consumed_resources[r] = 0
+        return {
+            r: math.floor(consumed_resources[r])
+            for r in prices.keys()
+        }
+
     def to_json(self):
         return {
             k:self.__getattribute__(k)
