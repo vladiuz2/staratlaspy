@@ -65,6 +65,8 @@ async def score_fleet(wallet, currency):
     pt.align['Daily Burn'] = 'r'
     pt.align['Net Yield'] = 'r'
     pt.align['APR'] = 'r'
+    tot_burn = 0
+    tot_reward = 0
     for i in range(len(nfts)):
         if staking_state[i]:
             qty = staking_state[i].ship_quantity_in_escrow
@@ -74,11 +76,13 @@ async def score_fleet(wallet, currency):
             if currency == 'USDC':
                 reward = reward * get_price(prices, 'ATLAS','USDC')
             stats = ScoreStats(vars_state[i], staking_state[i])
-            burn = stats.arms_daily_burn * get_price(prices, 'AMMO', currency) + \
-                   stats.food_daily_burn * get_price(prices, 'FOOD', currency) + \
-                   stats.fuel_daily_burn * get_price(prices, 'FUEL', currency) + \
-                   stats.toolkit_daily_burn * get_price(prices, 'TOOL', currency)
+            burn = stats.arms_daily_burn_units * get_price(prices, 'AMMO', currency) + \
+                   stats.food_daily_burn_units * get_price(prices, 'FOOD', currency) + \
+                   stats.fuel_daily_burn_units * get_price(prices, 'FUEL', currency) + \
+                   stats.toolkit_daily_burn_units * get_price(prices, 'TOOL', currency)
             net = reward - burn
+            tot_burn += burn
+            tot_reward += reward
             if value:
                 apr = 100*net * 365 / value
             else:
@@ -92,7 +96,18 @@ async def score_fleet(wallet, currency):
                 '{:,.2f}'.format(net)
                 #'{:,.1f} %'.format(apr)
             ])
-    print(pt)
+    pt.add_row([
+        'Total:',
+        '',
+        '{:,.2f}'.format(tot_reward),
+        '{:,.2f}'.format(tot_burn),
+        '{:,.2f}'.format(tot_reward-tot_burn)
+        # '{:,.1f} %'.format(apr)
+    ])
+    tlines = str(pt).split('\n')  # convert table view to lines
+    print('\n'.join(
+        tlines[:(len(tlines) - 2)] + [tlines[len(tlines) - 1]] + tlines[-2:]))  # add a sub line to table and print
+
 
 
 @cli.command()
