@@ -22,7 +22,7 @@ def getMarketVarsAccount():
         PROGRAM_ID
     )
 
-def getOrderVault(
+def getOrderVaultAccount(
         orderInitializer: PublicKey,
         tokenMint: PublicKey):
     """
@@ -41,7 +41,7 @@ def getOrderVault(
         PROGRAM_ID
     )
 
-def getOrderVaultAuth(
+def getOrderVaultAuthAccount(
         playerPubkey: PublicKey):
     """
     Returns the public key and bump seed for an order escrow authority.
@@ -73,7 +73,7 @@ def getRegisteredCurrencyAccount(
         PROGRAM_ID
     )
 
-def getOpenOrdersCounter(
+def getOpenOrdersCounterAccount(
         playerPubkey: PublicKey,
         depositMint: PublicKey):
     """
