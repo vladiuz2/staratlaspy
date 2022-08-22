@@ -1,6 +1,5 @@
 from solana.publickey import PublicKey
 from .program_id import PROGRAM_ID
-from .accounts import MarketVars, OpenOrdersCounter, OrderAccount, RegisteredCurrency
 
 class Seeds:
     MARKET_VARS_SEED = b'market-vars'

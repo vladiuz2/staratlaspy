@@ -132,18 +132,22 @@ including this:
 ### Get faction account state
 
 ```python
+from staratlaspy.faction import getPlayerFactionAccount
+from staratlaspy.faction.accounts import PlayerFactionData
 from solana.rpc.async_api import AsyncClient
-from staratlas.faction.accounts import PlayerFactionData
 import asyncio, json
-
+from solana.publickey import PublicKey
 client = AsyncClient("https://api.mainnet-beta.solana.com")
 async def main():
-    factData = await PlayerFactionData.fetch(client, "31JkGcco7wi7x8Nyt48movzDiWqpr1dXeDSbKc6EpCga")
+    factionAccount, bump = getPlayerFactionAccount(PublicKey('9p5C9hvZiyypdoLR6PrBzug12sZtmpSXAkfNxa8SEevg'))
+    factData = await PlayerFactionData.fetch(client, factionAccount)
+    await client.close()
     return factData.to_json()
-
-print(json.dumps(asyncio.run(main()), indent=2))
+print(json.dumps(asyncio.run(main()),indent=2))
 ```
+
 returns
+
 ```json
 {
   "owner": "9p5C9hvZiyypdoLR6PrBzug12sZtmpSXAkfNxa8SEevg",
