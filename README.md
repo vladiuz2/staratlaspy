@@ -15,8 +15,30 @@ python3 -m pip install staratlaspy
 
 # Usage
 
+### Get individual fleet state
 
-### Get fleet info for a wallet
+```python
+from staratlaspy.score.accounts.score_vars_ship import ScoreVarsShip
+from staratlaspy.score.accounts.ship_staking import ShipStaking
+from staratlaspy.score import getShipStakingAccount, getScoreVarsShipAccount, ScoreStats
+from solana.rpc.async_api import AsyncClient
+import asyncio, json
+from solana.publickey import PublicKey
+client = AsyncClient("https://api.mainnet-beta.solana.com")
+wallet = PublicKey('8BMwvX4CNk8iEaDrhL51fvwdiPKFkPc5BnnTxbwPYxtf')
+mint = PublicKey('AkNbg12E9PatjkiAWJ3tAbM479gtcoA1gi6Joa925WKi')
+async def main():
+    shipStakingAccount, bump = getShipStakingAccount(wallet, mint)
+    varsShipAccount, vbump = getScoreVarsShipAccount(mint)
+    stakingData = await ShipStaking.fetch(client, shipStakingAccount)
+    varsData = await ScoreVarsShip.fetch(client, varsShipAccount)
+    await client.close()
+    return ScoreStats(varsData, 
+                      stakingData).to_json()
+print(json.dumps(asyncio.run(main()),indent=2))
+```
+
+### Get all fleets info for a wallet
 
 ```python
 import asyncio, json, httpx, prettytable
