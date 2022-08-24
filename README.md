@@ -37,6 +37,61 @@ async def main():
                       stakingData).to_json()
 print(json.dumps(asyncio.run(main()),indent=2))
 ```
+returns
+```
+{
+  "arms_daily_burn_units": 17131,
+  "arms_full_supply_deficit_units": 185221,
+  "arms_optimal_supply_deficit_seconds": 84585.73706315039,
+  "arms_optimal_supply_deficit_seconds_human": "23h 29m 45s",
+  "arms_optimal_supply_deficit_units": 16770,
+  "arms_remaining_percent": 23.045995002917252,
+  "arms_remaining_seconds": 279765.4929368496,
+  "arms_remaining_seconds_human": "3d 5h 42m 45s",
+  "arms_remaining_units": 55469,
+  "arms_total_capacity_seconds": 1213944.084,
+  "arms_total_capacity_units": 240690,
+  "food_daily_burn_units": 17550,
+  "food_full_supply_deficit_units": 17182,
+  "food_optimal_supply_deficit_seconds": 84585.73706315039,
+  "food_optimal_supply_deficit_seconds_human": "23h 29m 45s",
+  "food_optimal_supply_deficit_units": 17181,
+  "food_remaining_percent": 76.78456113263282,
+  "food_remaining_seconds": 279765.4929368496,
+  "food_remaining_seconds_human": "3d 5h 42m 45s",
+  "food_remaining_units": 56828,
+  "food_total_capacity_seconds": 364351.23,
+  "food_total_capacity_units": 74010,
+  "fuel_daily_burn_units": 15460,
+  "fuel_full_supply_deficit_units": 87670,
+  "fuel_optimal_supply_deficit_seconds": 84585.73706315039,
+  "fuel_optimal_supply_deficit_seconds_human": "23h 29m 45s",
+  "fuel_optimal_supply_deficit_units": 15135,
+  "fuel_remaining_percent": 36.346497974527956,
+  "fuel_remaining_seconds": 279765.4929368496,
+  "fuel_remaining_seconds_human": "3d 5h 42m 45s",
+  "fuel_remaining_units": 50060,
+  "fuel_total_capacity_seconds": 769717.878,
+  "fuel_total_capacity_units": 137730,
+  "min_capacity_seconds": 364332,
+  "min_capacity_seconds_human": "4d 5h 12m 12s",
+  "min_total_capacity_seconds": 364351.23,
+  "seconds_inactive": 0,
+  "seconds_inactive_human": "",
+  "seconds_since_last_action": 84568.5070631504,
+  "toolkit_daily_burn_units": 19221,
+  "toolkit_full_supply_deficit_units": 106249,
+  "toolkit_optimal_supply_deficit_seconds": 84587.73706315039,
+  "toolkit_optimal_supply_deficit_seconds_human": "23h 29m 47s",
+  "toolkit_optimal_supply_deficit_units": 18817,
+  "toolkit_remaining_percent": 36.93862968057066,
+  "toolkit_remaining_seconds": 279763.4929368496,
+  "toolkit_remaining_seconds_human": "3d 5h 42m 43s",
+  "toolkit_remaining_units": 62236,
+  "toolkit_total_capacity_seconds": 757373.772,
+  "toolkit_total_capacity_units": 168485
+}
+```
 
 ### Get all fleets info for a wallet
 
