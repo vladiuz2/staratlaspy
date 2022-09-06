@@ -137,7 +137,7 @@ async def score_supplies(wallet):
     pt.align['Food'] = 'r'
     pt.align['Ammo'] = 'r'
     pt.align['Tool'] = 'r'
-    pt.align['Resupply in'] = 'l'
+    pt.align['Resupply in'] = 'r'
     for i in range(len(nfts)):
         if staking_state[i]:
             qty = staking_state[i].ship_quantity_in_escrow
@@ -147,10 +147,10 @@ async def score_supplies(wallet):
             pt.add_row([
                 nfts[i].get('name'),
                 '{:,.0f}'.format(qty),
-                '{:,.1f}%'.format(stats.fuel_current_supply_to_total_capacity_percent*100),
-                '{:,.1f}%'.format(stats.food_current_supply_to_total_capacity_percent*100),
-                '{:,.1f}%'.format(stats.arms_current_supply_to_total_capacity_percent*100),
-                '{:,.1f}%'.format(stats.toolkit_current_supply_to_total_capacity_percent*100),
+                '{:,.1f}%'.format(stats.fuel_remaining_percent),
+                '{:,.1f}%'.format(stats.food_remaining_percent),
+                '{:,.1f}%'.format(stats.arms_remaining_percent),
+                '{:,.1f}%'.format(stats.toolkit_remaining_percent),
                 time_breakdown_string(stats.seconds_remaining * 1000, 1 )
             ])
     print(pt)

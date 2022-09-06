@@ -126,6 +126,11 @@ class ScoreStats():
                                          self.__getattribute__(f'{r}_optimal_supply_deficit_seconds') /
                                       self.__getattribute__(f'{r}_total_capacity_seconds')))
 
+        self._set_j_attr_(f'seconds_remaining',min([
+            self.__getattribute__(f'{r}_remaining_seconds')
+            for r in rm.keys()
+        ]))
+
     def limited_atlas_resupply(self,
                                atlas: float,
                                fuel_price: float = 0.00144336,
