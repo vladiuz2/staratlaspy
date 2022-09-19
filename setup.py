@@ -56,7 +56,8 @@ setup(
         'solana==0.23.1',
         'click==8.1.3',
         'anchorpy[cli]==0.9.1',
-        'asyncclick==8.1.3.2'
+        'asyncclick==8.1.3.2',
+        'prettytable=3.4.1'
     ],
     data_files=[("idls", [
         "idls/staratlas-score.json",
