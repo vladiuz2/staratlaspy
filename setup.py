@@ -60,7 +60,8 @@ setup(
         'click==8.1.3',
         'anchorpy[cli]==0.9.1',
         'asyncclick==8.1.3.2',
-        'prettytable==3.4.1'
+        'prettytable==3.4.1',
+        'httpx==0.18.2'
     ],
     data_files=[("idls", [
         "idls/staratlas-score.json",
