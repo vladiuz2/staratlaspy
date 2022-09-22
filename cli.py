@@ -156,5 +156,18 @@ async def score_supplies(wallet):
     print(pt)
 
 
+@cli.command()
+@click.argument('account', nargs = 1)
+async def account(account):
+    """
+    Fetch, parse and print account data
+    """
+    accountKey = PublicKey(account)
+    connection = AsyncClient(SOLANA_NODE_URL)
+    resps = await fetch_multiple_accounts(connection, [account])
+    await connection.close()
+    if len(resps):
+        print(json.dumps(resps[0].to_json(),indent=2))
+
 if __name__ == '__main__':
     cli(_anyio_backend="asyncio")

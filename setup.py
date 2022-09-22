@@ -23,7 +23,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="staratlaspy",
-    version="0.1.38",
+    version="0.1.39",
     description="Python module for parsing staratlas instructions (based on anchorpy).",
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -60,7 +60,7 @@ setup(
         'anchorpy[cli]==0.9.1',
         'asyncclick==8.1.3.2',
         'prettytable==3.4.1',
-        'httpx==0.23.0'
+        'httpx==0.18.2'
     ],
     data_files=[("idls", [
         "idls/staratlas-score.json",
