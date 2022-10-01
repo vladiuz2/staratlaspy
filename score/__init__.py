@@ -130,6 +130,16 @@ class ScoreStats():
             self.__getattribute__(f'{r}_remaining_seconds')
             for r in rm.keys()
         ]))
+        self._set_j_attr_(f'seconds_remaining_human',
+            time_breakdown_string(self.__getattribute__(f'seconds_remaining') * 1000, 2)
+                          )
+        self._set_j_attr_(f'atlas_rewards_pending',
+                          staking.ship_quantity_in_escrow * (
+                                  staking.total_time_staked - staking.staked_time_paid +
+                                  time.time() - staking.current_capacity_timestamp
+                          ) * vars.reward_rate_per_second / 10 ** 8
+        )
+
 
     def limited_atlas_resupply(self,
                                atlas: float,
