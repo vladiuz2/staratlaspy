@@ -23,7 +23,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 setup(
     name="staratlaspy",
-    version="0.1.40",
+    version="0.1.41",
     description="Python module for parsing staratlas instructions (based on anchorpy).",
     long_description=long_description,
     long_description_content_type='text/markdown',

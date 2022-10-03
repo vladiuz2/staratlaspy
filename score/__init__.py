@@ -139,6 +139,9 @@ class ScoreStats():
                                   time.time() - staking.current_capacity_timestamp
                           ) * vars.reward_rate_per_second / 10 ** 8
         )
+        self._set_j_attr_(f'atlas_rewards_daily',
+                          staking.ship_quantity_in_escrow * 60 * 60 * 24 * vars.reward_rate_per_second / 10 ** 8
+        )
 
 
     def limited_atlas_resupply(self,
